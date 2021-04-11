@@ -10,26 +10,70 @@
     <button id="btn-start">Start</button>
     <button id="btn-stop">Stop</button>
     
-    <!-- <audio controls autoplay>
-        <source src="./A/1.mp3" type="audio/mpeg">
-    </audio> -->
-    <audio src="./A/1.mp3" download controls controlsList="download"></audio>
-    <a href="./A/ufo.mp3" download>download</a>
+    <audio id="vid1" src="" controls></audio>
+    <audio id="vid2" src="" controls></audio>
+   
+    <!-- <audio src="./A/1.mp3" download controls controlsList="download"></audio>
+    <a href="./A/ufo.mp3" download>download</a> -->
 
-    <div id="song"></div>
+    <div id="recordings">
+        <h1>Recordings</h1>
+    </div>
 
 </body>
 <script>
-    var audio = document.querySelector('audio');
-     // true
-    console.log(audio.controls)
-    console.log(audio.controlsList)
-
 
     let constraintObj = {
         audio: true,
         video: false
     }
+    navigator.mediaDevices.getUserMedia(constraintObj)
+    .then((mediaStream) => {
+        let audio = document.getElementById("vid1");
+        if("srcObject" in audio){
+            audio.srcObject = mediaStream;
+        }else{
+            audio.src = window.URL.createObjectURL(mediaStream);
+        }
+
+        audio.onloadedmetadata = function(ev){
+            audio.play();
+        }
+
+        let start = document.getElementById("btn-start");
+        let stop = document.getElementById("btn-stop");
+        
+        let mediaRecorder = new MediaRecorder(mediaStream);
+        let chunks = [];
+
+        start.addEventListener('click', (ev) => {
+            mediaRecorder.start();
+            console.log(mediaRecorder.state);
+        });
+
+        stop.addEventListener("click", (ev) => {
+            mediaRecorder.stop();
+            console.log(mediaRecorder.state);
+        });
+        mediaRecorder.ondataavailable = function(ev) {
+            chunks.push(ev.data);
+        }
+        mediaRecorder.onstop = (ev) => {
+            let blob = new Blob(chunks, {'type' : 'audio/mp3;'});
+            chunks = [];
+            let audioURL = window.URL.createObjectURL(blob);
+            let audioSave  = document.createElement("audio");
+            audioSave.controls = true;
+            audioSave.src = audioURL;
+            document.getElementById("recordings").append(audioSave);
+        }
+
+
+    })
+    .catch((err) => {
+        console.log(err)
+    })
+
 
 </script>
 
